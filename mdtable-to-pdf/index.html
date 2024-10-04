@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Markdown Table Renderer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f4f4f4;
+            --text-color: #333;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-color: #ddd;
+            --table-even-row: #f9f9f9;
+            --table-header: #f2f2f2;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 15px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            resize: vertical;
+            transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        button {
+            background-color: var(--primary-color);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #renderedTable {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            overflow-x: auto;
+            transition: all 0.3s ease;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: var(--table-header);
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: var(--table-even-row);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        #status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        #darkModeToggle {
+            background-color: #34495e;
+        }
+        .dark-mode {
+            --primary-color: #3498db;
+            --secondary-color: #ecf0f1;
+            --background-color: #2c3e50;
+            --text-color: #ecf0f1;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --border-color: #34495e;
+            --table-even-row: #34495e;
+            --table-header: #2980b9;
+        }
+        .dark-mode .container {
+            background-color: #34495e;
+        }
+        .dark-mode textarea, .dark-mode #renderedTable {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border-color: #4a6278;
+        }
+        .dark-mode th {
+            color: #ffffff;
+        }
+        .dark-mode #status {
+            color: #bdc3c7;
+        }
+        .dark-mode #darkModeToggle {
+            background-color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Markdown Table Renderer</h1>
+        <label for="input">Enter your markdown table here:</label>
+        <textarea id="input" placeholder="Enter your markdown table here...">| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Row 1, Col 1 | Row 1, Col 2 | Row 1, Col 3 |
+| Row 2, Col 1 | Row 2, Col 2 | Row 2, Col 3 |</textarea>
+        <div class="button-group">
+            <button id="downloadBtn">Download as PDF</button>
+            <button id="copyBtn">Copy Table HTML</button>
+            <button id="darkModeToggle">Toggle Dark Mode</button>
+        </div>
+        <div id="renderedTable"></div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+    (() => {
+        const input = document.getElementById('input');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const renderedTable = document.getElementById('renderedTable');
+        const status = document.getElementById('status');
+        let debounceTimer;
+
+        const renderTable = () => {
+            const markdown = input.value.trim();
+            if (markdown) {
+                renderedTable.innerHTML = marked.parse(markdown);
+                status.textContent = 'Table rendered successfully.';
+            } else {
+                renderedTable.innerHTML = '';
+                status.textContent = 'Waiting for input...';
+            }
+        };
+
+        const debounce = (func, delay) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(func, delay);
+        };
+
+        const downloadPDF = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const tableHtml = marked.parse(input.value);
+            const parser = new DOMParser();
+            const tableDoc = parser.parseFromString(tableHtml, 'text/html');
+            const table = tableDoc.querySelector('table');
+
+            if (!table) {
+                status.textContent = 'No valid table found in the markdown. Please check your input.';
+                return;
+            }
+
+            const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent);
+            const rows = Array.from(table.querySelectorAll('tr')).slice(1).map(row => 
+                Array.from(row.querySelectorAll('td')).map(td => td.textContent)
+            );
+
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: 20,
+                margin: { top: 20 },
+                styles: { overflow: 'linebreak', cellPadding: 3 },
+                columnStyles: { 0: { cellWidth: 'auto' } },
+                didDrawPage: (data) => {
+                    doc.setFontSize(10);
+                    doc.text('Generated on: ' + new Date().toLocaleString(), data.settings.margin.left, doc.internal.pageSize.height - 10);
+                }
+            });
+
+            doc.save('rendered_table.pdf');
+            status.textContent = 'PDF downloaded successfully.';
+        };
+
+        const copyTableHTML = () => {
+            const tableHtml = renderedTable.innerHTML;
+            navigator.clipboard.writeText(tableHtml).then(() => {
+                status.textContent = 'Table HTML copied to clipboard.';
+            }, () => {
+                status.textContent = 'Failed to copy table HTML. Please try again.';
+            });
+        };
+
+        const toggleDarkMode = () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
+            darkModeToggle.textContent = isDarkMode ? 'Light Mode' : 'Dark Mode';
+            status.textContent = `${isDarkMode ? 'Dark' : 'Light'} mode enabled.`;
+        };
+
+        const initDarkMode = () => {
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.textContent = 'Light Mode';
+            }
+        };
+
+        input.addEventListener('input', () => debounce(renderTable, 300));
+        downloadBtn.addEventListener('click', downloadPDF);
+        copyBtn.addEventListener('click', copyTableHTML);
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        initDarkMode();
+        renderTable();
+    })();
+    </script>
+</body>
+</html>
