@@ -133,8 +133,12 @@
             { regex: /\[([^\]]+)\]\(([^)]+)\)/g, replacement: '<a href="$2" style="color: #0000FF; text-decoration: underline;">$1</a>' },
             
             // Code blocks
-            { regex: /```([\s\S]*?)```/g, replacement: '<pre style="font-family: monospace; background-color: #f0f0f0; padding: 10px; border: 1px solid #ccc;">$1</pre>' },
-            { regex: /`([^`]+)`/g, replacement: '<code style="font-family: monospace; background-color: #f0f0f0; padding: 2px 4px;">$1</code>' },
+            { regex: /
+
+([\s\S]*?)
+
+/g, replacement: '<pre style="font-family: monospace; background-color: #f0f0f0; padding: 10px; border: 1px solid #ccc;">$1</pre>' },
+            { regex: /([^]+)/g, replacement: '<code style="font-family: monospace; background-color: #f0f0f0; padding: 2px 4px;">$1</code>' },
             
             // Lists
             { regex: /^\s*\-\s*(.*)/gm, replacement: '<ul style="margin-left: 20px;"><li style="list-style-type: disc;">$1</li></ul>' },
@@ -156,19 +160,19 @@
 
             // Convert tables
             formattedText = formattedText.replace(/\n\|(.*)\|\n/g, (match, p1) => {
-                const headers = p1.split('|').map(header => `<th style="background-color: #f2f2f2; font-weight: bold; border: 1px solid #ddd; padding: 8px;">${header.trim()}</th>`).join('');
-                return `<table style="border-collapse: collapse; width: 100%; margin: 10px 0;"><thead><tr>${headers}</tr></thead><tbody>`;
+                const headers = p1.split('|').map(header => <th style="background-color: #f2f2f2; font-weight: bold; border: 1px solid #ddd; padding: 8px;">${header.trim()}</th>).join('');
+                return <table style="border-collapse: collapse; width: 100%; margin: 10px 0;"><thead><tr>${headers}</tr></thead><tbody>;
             });
 
             formattedText = formattedText.replace(/\|(.*)\|/g, (match, p1) => {
-                const cells = p1.split('|').map(cell => `<td style="border: 1px solid #ddd; padding: 8px;">${cell.trim()}</td>`).join('');
-                return `<tr>${cells}</tr>`;
+                const cells = p1.split('|').map(cell => <td style="border: 1px solid #ddd; padding: 8px;">${cell.trim()}</td>).join('');
+                return <tr>${cells}</tr>;
             });
 
             formattedText = formattedText.replace(/(<\/tr>)\s*(?!<tr>)/g, '$1</tbody></table>');
 
             // Wrap the entire content in a div with default paragraph styling
-            formattedText = `<div style="font-family: 'Liberation Serif'; font-size: 12pt; line-height: 1.5;">${formattedText}</div>`;
+            formattedText = <div style="font-family: 'Liberation Serif'; font-size: 12pt; line-height: 1.5;">${formattedText}</div>;
 
             outputDiv.innerHTML = formattedText;
         }
